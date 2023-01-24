@@ -6,7 +6,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"math/rand"
 	"testing"
-	"time"
 )
 
 type testdoc struct {
@@ -15,10 +14,9 @@ type testdoc struct {
 }
 
 func TestCollection_FindById(t *testing.T) {
-	rand.Seed(time.Now().UnixNano())
-	mockDb.Connect("mongodb://localhost:27017/colt?readPreference=primary&directConnection=true&ssl=false", "colt")
+	mockDb := MockSetup()
 
-	collection := GetCollection[*testdoc](&mockDb, "testdocs")
+	collection := GetCollection[*testdoc](mockDb, "testdocs")
 	doc := testdoc{Title: fmt.Sprint(rand.Int())}
 	doc2 := testdoc{Title: "Test2"}
 
@@ -33,10 +31,9 @@ func TestCollection_FindById(t *testing.T) {
 }
 
 func TestCollection_FindOne(t *testing.T) {
-	rand.Seed(time.Now().UnixNano())
-	mockDb.Connect("mongodb://localhost:27017/colt?readPreference=primary&directConnection=true&ssl=false", "colt")
+	mockDb := MockSetup()
 
-	collection := GetCollection[*testdoc](&mockDb, "testdocs")
+	collection := GetCollection[*testdoc](mockDb, "testdocs")
 	doc := testdoc{Title: fmt.Sprint(rand.Int())}
 	doc2 := testdoc{Title: "Test2"}
 
@@ -51,10 +48,9 @@ func TestCollection_FindOne(t *testing.T) {
 }
 
 func TestCollection_Find(t *testing.T) {
-	rand.Seed(time.Now().UnixNano())
-	mockDb.Connect("mongodb://localhost:27017/colt?readPreference=primary&directConnection=true&ssl=false", "colt")
+	mockDb := MockSetup()
 
-	collection := GetCollection[*testdoc](&mockDb, "testdocs")
+	collection := GetCollection[*testdoc](mockDb, "testdocs")
 
 	title := fmt.Sprint(rand.Int())
 	doc := testdoc{Title: title}
