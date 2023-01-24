@@ -62,6 +62,7 @@ func TestCollection_OnFindOne(t *testing.T) {
 	collection := GetCollection[*testdoc](mockDb, "testdocs")
 
 	doc := testdoc{Title: fmt.Sprint(rand.Int())}
+	doc.SetID("secondId")
 	collection.Insert(&doc)
 
 	collection.BeforeHooks.OnFindOne(func(filter *bson.M) error {
@@ -70,16 +71,62 @@ func TestCollection_OnFindOne(t *testing.T) {
 		return nil
 	})
 
-	result, err := collection.Find(bson.M{"_id": "firstId"})
+	result, err := collection.FindOne(bson.M{"_id": "firstId"})
 	assert.Nil(t, err)
-	assert.Equal(t, result[0].ID, doc.ID)
-	assert.Equal(t, result[0].Title, doc.Title)
+	assert.Equal(t, result.ID, doc.ID)
+	assert.Equal(t, result.Title, doc.Title)
 }
 
-func TestCollection_OnFindOne_Error(t *testing.T) {}
+func TestCollection_OnFindOne_Error(t *testing.T) {
+	mockDb := MockSetup()
+	collection := GetCollection[*testdoc](mockDb, "testdocs")
 
-func TestCollection_OnCount(t *testing.T)       {}
-func TestCollection_OnCount_Error(t *testing.T) {}
+	doc := testdoc{Title: fmt.Sprint(rand.Int())}
+	collection.Insert(&doc)
+
+	collection.BeforeHooks.OnFindOne(func(filter *bson.M) error {
+		return errors.New("Hook failing")
+	})
+
+	result, err := collection.FindOne(bson.M{"_id": doc.ID})
+	assert.NotNil(t, err)
+	assert.Nil(t, result)
+}
+
+func TestCollection_OnCount(t *testing.T) {
+	mockDb := MockSetup()
+	collection := GetCollection[*testdoc](mockDb, "testdocs")
+
+	doc := testdoc{Title: fmt.Sprint(rand.Int())}
+	doc.SetID("secondId")
+	collection.Insert(&doc)
+
+	collection.BeforeHooks.OnCount(func(filter *bson.M) error {
+		assert.Equal(t, (*filter)["_id"], "firstId")
+		(*filter)["_id"] = "secondId"
+		return nil
+	})
+
+	result, err := collection.CountDocuments(bson.M{"_id": "firstId"})
+	assert.Nil(t, err)
+	assert.Equal(t, result, int64(1))
+}
+
+func TestCollection_OnCount_Error(t *testing.T) {
+	mockDb := MockSetup()
+	collection := GetCollection[*testdoc](mockDb, "testdocs")
+
+	doc := testdoc{Title: fmt.Sprint(rand.Int())}
+	collection.Insert(&doc)
+
+	collection.BeforeHooks.OnCount(func(filter *bson.M) error {
+		return errors.New("Hook failing")
+	})
+
+	result, err := collection.CountDocuments(bson.M{"_id": doc.ID})
+	assert.NotNil(t, err)
+	assert.Equal(t, result, int64(0))
+}
 
 func TestCollection_OnUpdateOne(t *testing.T)       {}
 func TestCollection_OnUpdateOne_Error(t *testing.T) {}
